@@ -1,0 +1,124 @@
+#************CREATE FLASK APP STEPS:***********************
+1- create folder called build-my-own-api
+2- go to vertual environment folder and cmd 
+3- create vertual env for this project and call it build-api-ven:python -m venve build-quote-api-venve
+4-activate the environment: .\build-quote-api-venve\Scripts\activate
+5- will see the name of environment between paranthesis so will INSTALL THE PACKAGES BY WRITING THIS command: pip install flask pymongo requests
+(requests is very important for api)
+6-cd folder path(build-my-own-api)for ex:cd .c/rafal/document/project/build-my-own-api
+5-run python app: python app.py or server.py
+6-will get the url (localhost on port 5000 by defualt)
+
+****************************-CONNECTING MONGODB(THE HARD CODED WAY)********************************
+--CONNECTING MONGODB(THE HARD CODED WAY)---
+1-we already installed pymongo and flask now its time to connect and craete db and collection
+-myclient=pymongo.MongoClient("mongodb+srv://Rafaljawad:rootroot@cluster0.4li9lly.mongodb.net/?retryWrites=true&w=majority")create db remote via cluster0
+-mydb=myclient["bankdb"] craete db if its not in db list
+mydb=myclient["bankdb"]
+
+print(myclient.list_database_names())
+
+
+***********************THE BEST WAY TO CREATE DB CONNECTION*********************************************
+THE BEST WAY TO CREATE DB CONNECTION IS A FUNCNTION INSIDS DBMOUDLE AND USE IT FOR ALL PROJECTS (JUST PASS THE DB NAME AND COLLECTION)
+-def createConnection(name,colName)-->THIS DEF INSIDE DATABASE.PY -->GO FOR IT
+
+
+
+*********************APP.PY SECTION******************************************
+NOW MOVING TO APP.PY AND IMPORT MOUDLES :
+from flask import Flask,Response,request
+import pymongo
+import json
+from bson.objectid import ObjectId
+from dbmoudules.database import *-->HERE TO GET THE FUNCTION AND MYCOL WHICH HAS DB NAME WITH COLLECTION
+
+
+
+
+*************************ROUTE SECTION TO DO GET VIA POSTMAN *******************************************
+@app.route("/quotes",methods=['GET'])#MEANS GO TO POSTMAN AND CHOOSE GET
+def get_quote():
+    data=list(mycol.find())#find all data inside this db and collection quoteInfo
+    response=[]#create empty list to append each object from data and store it in a list
+    for dt in data:#loop through data 
+        dt["_id"]=str(dt["_id"])# this to solve--> TypeError: Object of type ObjectId is not JSON serializable 
+        print(dt)
+        response.append(dt)# append each object 
+    print("#############",response)
+    return {"data":response}# return the jason format which is look like this at the end AFTER SEND THE REQUESTS
+    
+
+NOW GO TO POSTMAN AND CHOOSE GET METHOD AND PASTE THE URL http://127.0.0.1:80/quotes AND HIT SEND WILL GET THIS OUTPUT:
+
+{
+    "data": [
+        {
+            "_id": "639bcd2b3efe7552344ddb93",
+            "authorName": "Oscar Wilde",
+            "id": 1,
+            "imgUrl": "https://cdn.britannica.com/21/94621-050-58D29508/Oscar-Wilde-1882.jpg?w=400&h=300&c=crop",
+            "quote": "“Be yourself; everyone else is already taken.”"
+        },
+        {
+            "_id": "639bce17399b9d25902c24de",
+            "authorName": "William W. Purkey",
+            "id": 1,
+            "imgUrl": "https://images.gr-assets.com/authors/1282396130p8/1744830.jpg",
+            "quote": "“You've gotta dance like there's nobody watching,Love like you'll never be hurt,Sing like there's nobody listening,\nAnd live like it's heaven on earth.”"
+        }
+    ]
+}
+
+
+
+*************************ROUTE SECTION TO DO POST VIA POSTMAN *******************************************
+
+@app.route("/quotes",methods=['POST'])
+def create_quote():
+will make an object with key which is match what inside mongodb collection and requeest.form[match what key name inside postman]
+    quote_data={'id':request.form['id'],"quote":request.form['quote'],"authorName":request.form['authorName'],"imgUrl":request.form['imgUrl']}
+    data=mycol.insert_one(quote_data)#create 
+    print("^^^^^^^^^^^^^^^^^^^^",data)
+    return "quotes has been created Successfully!"
+
+    go to postman and paste http://127.0.0.1:80/quotes with POST 
+    then go to form data option to write the key and value to send it to db
+    **key has to be same name inside requeest.form['keyname']
+
+    ex//
+    postman
+
+    POST   http://127.0.0.1:80/quotes   SEND
+    form data
+    KEY         value
+    id            1
+    quote         hgsjgfjdsghjsdgkgdg
+    authorName     hjjdgdkgdfkgjd
+    imgUrl        http://hgagsfgfhsgfghghfgsh
+    hit send and check mongodb or GET method to make sure it has been added .
+
+
+
+
+
+    *************************ROUTE SECTION TO DO PUT(UPDATE) VIA POSTMAN ***************
+
+@app.route("/quotes/<id>",methods=['PUT'])
+def update_quote(id):
+    updated_data={"$set":{'id':request.form['id'],"quote":request.form['quote'],"authorName":request.form['authorName'],"imgUrl":request.form['imgUrl']}}
+    data=mycol.update_one({"_id":ObjectId(id)},updated_data)
+    return "quoet has been updated!"
+
+update_one takes 2 arguments 1-{id:} 2-{$set{all keys with request.form values}}
+
+
+
+
+
+*************************ROUTE SECTION TO DO DELETE VIA POSTMAN ***************
+
+    @app.route("/quotes/<id>",methods=['DELETE'])
+def delete_quote(id):
+    data=mycol.delete_one({"_id":ObjectId(id)}) JUST PASS THE ID AND ALL THE RECORD RELATED TO THAT PARTICULOR RECORD  WILL BE DELETED
+    return "quoet has been deleted!"
