@@ -1,4 +1,4 @@
-from flask import Flask,Response,request
+from flask import Flask,Response,request,render_template
 import pymongo
 import json
 from bson.objectid import ObjectId
@@ -7,7 +7,9 @@ app=Flask(__name__)
 
 mycol=createConnection('Quotes','quoteInfo')# this will pass thename of db and collection to database.py which has function for creating db
 
-
+@app.route("/")
+def home():
+    return render_template("index.html")
 # CRUD METHODS TO CREATE AN API THROUGH POSTMAN
 
 #***************** CREATE(POST)**************
